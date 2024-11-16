@@ -1,28 +1,42 @@
+#![forbid(missing_docs)]
+//! Extensions and methods for the K-Means algorithm
+//!
+
 use std::collections::HashMap;
 
 use glam::Vec2;
 use index_vec::{index_vec, IndexVec};
 use rand::{seq::SliceRandom, thread_rng, Rng};
 
+/// The default amount of clusters to generate
 const DEFAULT_K: usize = 4;
+/// The default number of points to generate
 const DEFAULT_N_SAMP: usize = 100;
+/// The standard deviation, i.e. how far away the points are from their centroids when being generated
 const DEFAULT_STD: f32 = 0.8;
 
+/// An alias to `glam::f32::Vec2`, representing a point in 2D space
 pub type Point = Vec2;
 
 index_vec::define_index_type! {
+    /// Index for `IndexVec`s with Points, such as the \[generated\] dataset
     pub struct PointIdx = usize;
 }
 
 index_vec::define_index_type! {
+    /// Index for centroid `IndexVec`s, enabling the associations for Centroids and `Vec<Point>`s
     pub struct CentroidIdx = usize;
 }
 
+/// A struct for keeping track of how far points are from a centroid
 struct CentroidDistance {
+    /// Centroid Index. References a centroid in an `IndexVec<CentroidIdx, [&]Point>`
     idx: CentroidIdx,
+    /// The distance to the point from the centroid (or vice-versa)
     distance: f32,
 }
 
+/// Generates a random point in the area of a 20x20 coordinate grid
 fn random_point() -> Point {
     let mut rng = thread_rng();
     let (x, y) = (rng.gen_range(0_f32..20_f32), rng.gen_range(0_f32..20_f32));
@@ -30,6 +44,13 @@ fn random_point() -> Point {
     Point::new(x, y)
 }
 
+/// Creates a random dataset for the k-means algorithm.
+///
+/// `clusters` defaults to `DEFAULT_K`
+///
+/// `n_samp` defaults to `DEFAULT_N_SAMP`
+///
+/// `std` defaults to `DEFAULT_STD`
 pub fn generate_datapoints(
     clusters: Option<usize>,
     n_samp: Option<usize>,
@@ -47,7 +68,7 @@ pub fn generate_datapoints(
 
     let std = match std {
         Some(v) => v,
-        None => DEFAULT_STD * 2.,
+        None => DEFAULT_STD,
     };
 
     let mut centroids: IndexVec<PointIdx, Point> = index_vec![Point::default(); clusters];
@@ -75,6 +96,9 @@ pub fn generate_datapoints(
     points
 }
 
+/// Picks random centroids from a dataset
+///
+/// Panics if: the provided dataset is empty
 pub fn pick_centroids(
     dataset: &IndexVec<PointIdx, Point>,
     k: Option<usize>,
@@ -96,6 +120,8 @@ pub fn pick_centroids(
     centroid_vec
 }
 
+/// Associate the centroids with points by returning a `HashMap<CentroidIdx, Vec<&Point>>`
+/// The `CentroidIdx` points to a centroid in the picked centroids (see pick_centroisd)
 pub fn associate_centroids_to_points<'d, 'c>(
     dataset: &'d IndexVec<PointIdx, Point>,
     centroids: &'c IndexVec<CentroidIdx, Point>,
@@ -125,6 +151,7 @@ pub fn associate_centroids_to_points<'d, 'c>(
     assoc
 }
 
+/// Updates centroids by calculating the mean of all the points associated with them.
 pub fn update_centroids(assoc: &HashMap<CentroidIdx, Vec<&Point>>) -> IndexVec<CentroidIdx, Point> {
     let mut new_centroids: IndexVec<CentroidIdx, Point> = index_vec!();
 
@@ -138,7 +165,8 @@ pub fn update_centroids(assoc: &HashMap<CentroidIdx, Vec<&Point>>) -> IndexVec<C
     new_centroids
 }
 
-fn calculate_average_point(points: &Vec<&Point>) -> Point {
+/// Calculates the mean point for a given vector of points
+pub fn calculate_average_point(points: &Vec<&Point>) -> Point {
     let mut x: f32 = 0f32;
     let mut y: f32 = 0f32;
 
@@ -155,6 +183,8 @@ fn calculate_average_point(points: &Vec<&Point>) -> Point {
     Point::new(x, y)
 }
 
+/// Sorts a `Point` Vector with the following criteria:
+/// The closer a point is to the coordinate origin (i.e., \[0, 0\]), the 'smaller' it is.
 pub fn sort_point_vec(v: &mut IndexVec<CentroidIdx, Vec2>) {
     v.sort_by(|a, b| a.x.total_cmp(&b.x).cmp(&a.y.total_cmp(&b.y)))
 }

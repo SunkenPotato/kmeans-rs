@@ -1,3 +1,10 @@
+#![forbid(missing_docs)]
+
+//! This program demonstrates writing the K-Means algorithm in Rust.
+//! The datapoints are always generated at runtime, and have no real meaning.
+//!
+//! I wrote this because of my homework.
+
 use k_mea_rs::{
     associate_centroids_to_points, generate_datapoints, pick_centroids, sort_point_vec,
     update_centroids,
