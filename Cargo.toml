@@ -1,10 +1,9 @@
 [package]
-name = "k-mea-rs"
+name = "k-mears"  # haha see what i did there
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 glam = "0.29.2"
 index_vec = "0.1.4"
-ordered-float = "4.5.0"
 rand = "0.8.5"
