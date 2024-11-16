@@ -4,3 +4,5 @@ It is very surely not perfect, and any pull requests or recommendations are welc
 
 TODO list:
 - [ ] X-Means
+
+Thanks to everybody on the Rust server who answered my silly questions about `f32`s
