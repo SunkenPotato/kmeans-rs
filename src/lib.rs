@@ -29,11 +29,27 @@ index_vec::define_index_type! {
 }
 
 /// A struct for keeping track of how far points are from a centroid
+#[derive(Debug)]
 struct CentroidDistance {
     /// Centroid Index. References a centroid in an `IndexVec<CentroidIdx, [&]Point>`
     idx: CentroidIdx,
     /// The distance to the point from the centroid (or vice-versa)
     distance: f32,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+/// The result of a k-means run.
+pub struct KMeansResult {
+    /// The Sum Squared Error
+    pub sse: f64,
+    /// The amount of clusters used in that k-means run.0
+    pub k: usize,
+}
+
+impl PartialOrd for KMeansResult {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.sse.partial_cmp(&other.sse)
+    }
 }
 
 /// Generates a random point in the area of a 20x20 coordinate grid
@@ -187,4 +203,28 @@ pub fn calculate_average_point(points: &Vec<&Point>) -> Point {
 /// The closer a point is to the coordinate origin (i.e., \[0, 0\]), the 'smaller' it is.
 pub fn sort_point_vec(v: &mut IndexVec<CentroidIdx, Vec2>) {
     v.sort_by(|a, b| a.x.total_cmp(&b.x).cmp(&a.y.total_cmp(&b.y)))
+}
+
+/// Compute the SSE
+pub fn calc_sse(
+    assoc: &HashMap<CentroidIdx, Vec<&Point>>,
+    centroids: &IndexVec<CentroidIdx, Vec2>,
+) -> KMeansResult {
+    let mut sse = 0f64;
+
+    for (ctr_idx, points) in assoc {
+        let ctr = centroids.get(*ctr_idx).unwrap();
+        let mut sub_sse = 0f32;
+
+        for point in points {
+            sub_sse += point.distance_squared(*ctr);
+        }
+
+        sse += sub_sse as f64;
+    }
+
+    KMeansResult {
+        sse,
+        k: assoc.keys().into_iter().len(),
+    }
 }
