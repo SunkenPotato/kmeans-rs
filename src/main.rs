@@ -5,7 +5,7 @@
 //!
 //! I wrote this because of my homework.
 
-use k_mea_rs::{
+use k_mears::{
     associate_centroids_to_points, generate_datapoints, pick_centroids, sort_point_vec,
     update_centroids,
 };
