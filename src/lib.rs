@@ -201,8 +201,10 @@ pub fn calculate_average_point(points: &Vec<&Point>) -> Point {
 
 /// Sorts a `Point` Vector with the following criteria:
 /// The closer a point is to the coordinate origin (i.e., \[0, 0\]), the 'smaller' it is.
-pub fn sort_point_vec(v: &mut IndexVec<CentroidIdx, Vec2>) {
-    v.sort_by(|a, b| a.x.total_cmp(&b.x).cmp(&a.y.total_cmp(&b.y)))
+pub fn sort_point_vec(v: &IndexVec<CentroidIdx, Vec2>) -> IndexVec<CentroidIdx, Vec2> {
+    let mut cloned_vec = v.clone();
+    cloned_vec.sort_by(|a, b| a.x.total_cmp(&b.x).cmp(&a.y.total_cmp(&b.y)));
+    cloned_vec
 }
 
 /// Compute the SSE

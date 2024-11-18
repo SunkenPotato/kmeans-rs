@@ -15,13 +15,18 @@ use k_mears::{
 fn k_means(dataset: &IndexVec<PointIdx, Vec2>, k: usize) -> KMeansResult {
     let mut old_centroids = pick_centroids(&dataset, Some(k));
 
+    let mut ctr = 0u8;
     loop {
+        ctr += 1;
         let assoc = associate_centroids_to_points(&dataset, &old_centroids);
-        let mut new_centroids = update_centroids(&assoc);
+        let new_centroids = update_centroids(&assoc);
 
-        if sort_point_vec(&mut new_centroids) == sort_point_vec(&mut old_centroids) {
+        if sort_point_vec(&new_centroids) == sort_point_vec(&old_centroids) {
+            println!("{ctr}");
             return calc_sse(&assoc, &new_centroids);
         }
+
+        old_centroids = new_centroids;
     }
 }
 
