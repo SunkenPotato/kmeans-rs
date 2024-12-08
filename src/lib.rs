@@ -1,6 +1,8 @@
-#![forbid(missing_docs)]
+#![deny(missing_docs)]
 //! Extensions and methods for the K-Means algorithm
 //!
+
+pub mod silhouette;
 
 use std::collections::HashMap;
 
@@ -141,15 +143,15 @@ pub fn pick_centroids(
 pub fn associate_centroids_to_points<'d, 'c>(
     dataset: &'d IndexVec<PointIdx, Point>,
     centroids: &'c IndexVec<CentroidIdx, Point>,
-) -> HashMap<CentroidIdx, Vec<&'d Point>> {
-    let mut assoc: HashMap<CentroidIdx, Vec<&'d Point>> = HashMap::new();
+) -> HashMap<CentroidIdx, IndexVec<PointIdx, &'d Point>> {
+    let mut assoc: HashMap<CentroidIdx, IndexVec<PointIdx, &Point>> = HashMap::new();
 
-    for point in dataset {
+    for (idx_p, point) in dataset.iter_enumerated() {
         let mut distances: Vec<CentroidDistance> = vec![];
 
-        for (idx, ctr) in centroids.iter_enumerated() {
+        for (idx_c, ctr) in centroids.iter_enumerated() {
             let cdist = CentroidDistance {
-                idx,
+                idx: idx_c,
                 distance: point.distance(*ctr),
             };
 
@@ -161,14 +163,19 @@ pub fn associate_centroids_to_points<'d, 'c>(
             .min_by(|x, y| x.distance.partial_cmp(&y.distance).unwrap())
             .expect("non-empty vec");
 
-        assoc.entry(smallest.idx).or_insert(vec![]).push(point);
+        assoc
+            .entry(smallest.idx)
+            .or_insert(index_vec![])
+            .push(point);
     }
 
     assoc
 }
 
 /// Updates centroids by calculating the mean of all the points associated with them.
-pub fn update_centroids(assoc: &HashMap<CentroidIdx, Vec<&Point>>) -> IndexVec<CentroidIdx, Point> {
+pub fn update_centroids(
+    assoc: &HashMap<CentroidIdx, IndexVec<PointIdx, &Point>>,
+) -> IndexVec<CentroidIdx, Point> {
     let mut new_centroids: IndexVec<CentroidIdx, Point> = index_vec!();
 
     let centroid_indices = assoc.keys();
@@ -182,7 +189,7 @@ pub fn update_centroids(assoc: &HashMap<CentroidIdx, Vec<&Point>>) -> IndexVec<C
 }
 
 /// Calculates the mean point for a given vector of points
-pub fn calculate_average_point(points: &Vec<&Point>) -> Point {
+pub fn calculate_average_point(points: &IndexVec<PointIdx, &Point>) -> Point {
     let mut x: f32 = 0f32;
     let mut y: f32 = 0f32;
 
@@ -209,7 +216,7 @@ pub fn sort_point_vec(v: &IndexVec<CentroidIdx, Vec2>) -> IndexVec<CentroidIdx, 
 
 /// Compute the SSE
 pub fn calc_sse(
-    assoc: &HashMap<CentroidIdx, Vec<&Point>>,
+    assoc: &HashMap<CentroidIdx, IndexVec<PointIdx, &Point>>,
     centroids: &IndexVec<CentroidIdx, Vec2>,
 ) -> KMeansResult {
     let mut sse = 0f64;
